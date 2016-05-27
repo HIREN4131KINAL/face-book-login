@@ -11,6 +11,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.facebook.CallbackManager;
@@ -20,6 +22,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
@@ -35,6 +38,7 @@ public class LoginActivity extends AppCompatActivity {
     private CallbackManager callbackManager;
     private LoginButton fbLoginButton;
     static String Name, Email, ProfilePic, DOB;
+    Button bt_login;
 
 
     @Override
@@ -47,78 +51,90 @@ public class LoginActivity extends AppCompatActivity {
         //You need this method to be used only once to configure
         //your key hash in your App Console at
         // developers.facebook.com/apps
-
         showHashKey(LoginActivity.this);
-        // creating connection detector class instance
 
         setContentView(R.layout.activity_login);
+
+        bt_login = (Button) findViewById(R.id.bt_login);
         fbLoginButton = (LoginButton) findViewById(R.id.login_button);
         fbLoginButton.setReadPermissions(Arrays.asList("public_profile, email, user_birthday, user_friends"));
 
-            fbLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+        FaceBookLogin();
 
-                @Override
-                public void onSuccess(LoginResult loginResult) {
+        bt_login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
-                    // App code
-                    GraphRequest request = GraphRequest.newMeRequest(
-                            loginResult.getAccessToken(),
-                            new GraphRequest.GraphJSONObjectCallback() {
-                                @Override
-                                public void onCompleted(
-                                        JSONObject object,
-                                        GraphResponse response) {
-                                    // Application code
-                                    Log.v("Profile ---------   ", response.toString());
+                LoginManager.getInstance().logInWithReadPermissions(LoginActivity.this, Arrays.asList("public_profile", "user_friends"));
+            }
+        });
 
-                                    try {
-                                        Name = object.getString("name");
-                                        Email = object.getString("email");
-                                        DOB = object.getString("birthday");
-                                        Log.v("Email = ", " " + Email);
-                                        //                                    Toast.makeText(getApplicationContext(), "Name " + Name, Toast.LENGTH_LONG).show();
+    }
 
-                                        Toast.makeText(LoginActivity.this, "Login Successful!", Toast.LENGTH_LONG).show();
+    private void FaceBookLogin() {
+        fbLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
-                                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                        startActivity(intent);
+            @Override
+            public void onSuccess(LoginResult loginResult) {
 
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                    }
+                // App code
+                GraphRequest request = GraphRequest.newMeRequest(
+                        loginResult.getAccessToken(),
+                        new GraphRequest.GraphJSONObjectCallback() {
+                            @Override
+                            public void onCompleted(
+                                    JSONObject object,
+                                    GraphResponse response) {
+                                // Application code
+                                Log.v("Profile ---------   ", response.toString());
 
+                                try {
+                                    Name = object.getString("name");
+                                    Email = object.getString("email");
+                                    DOB = object.getString("birthday");
+                                    Log.v("Email = ", " " + Email);
+                                    //                                    Toast.makeText(getApplicationContext(), "Name " + Name, Toast.LENGTH_LONG).show();
 
+                                    Toast.makeText(LoginActivity.this, "Login Successful!", Toast.LENGTH_LONG).show();
+
+                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                    startActivity(intent);
+
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
-                            });
-
-                    Bundle parameters = new Bundle();
-                    parameters.putString("fields", "id,name,email,gender, birthday");
-                    request.setParameters(parameters);
-                    request.executeAsync();
-
-                    System.out.println("Facebook Login Successful!");
-                    System.out.println("Logged in user Details : ");
-                    System.out.println("--------------------------");
-                    System.out.println("User ID  : " + loginResult.getAccessToken().getUserId());
-                    System.out.println("Authentication Token : " + loginResult.getAccessToken().getToken());
-
-                }
 
 
-                @Override
-                public void onCancel() {
-                    Toast.makeText(LoginActivity.this, "Login cancelled by user!", Toast.LENGTH_LONG).show();
-                    System.out.println("Facebook Login failed!!");
+                            }
+                        });
 
-                }
+                Bundle parameters = new Bundle();
+                parameters.putString("fields", "id,name,email,gender, birthday");
+                request.setParameters(parameters);
+                request.executeAsync();
 
-                @Override
-                public void onError(FacebookException e) {
-                    Toast.makeText(LoginActivity.this, "Login unsuccessful!", Toast.LENGTH_LONG).show();
-                    System.out.println("Facebook Login failed!! because of " + e.getCause().toString());
-                }
-            });
+                System.out.println("Facebook Login Successful!");
+                System.out.println("Logged in user Details : ");
+                System.out.println("--------------------------");
+                System.out.println("User ID  : " + loginResult.getAccessToken().getUserId());
+                System.out.println("Authentication Token : " + loginResult.getAccessToken().getToken());
 
+            }
+
+
+            @Override
+            public void onCancel() {
+                Toast.makeText(LoginActivity.this, "Login cancelled by user!", Toast.LENGTH_LONG).show();
+                System.out.println("Facebook Login failed!!");
+
+            }
+
+            @Override
+            public void onError(FacebookException e) {
+                Toast.makeText(LoginActivity.this, "Login unsuccessful!", Toast.LENGTH_LONG).show();
+                System.out.println("Facebook Login failed!! because of " + e.getCause().toString());
+            }
+        });
     }
 
     @Override
